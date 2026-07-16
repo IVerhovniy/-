@@ -33,10 +33,10 @@
 }
 
 :root {
-  /* Основные цвета — синий градиент в стиле Sui */
-  --color-bg-start: #0b1a3b;
-  --color-bg-mid: #1a5fb4;
-  --color-bg-end: #60a5fa;
+  /* Основные цвета — синий градиент в стиле Sui (по скриншоту) */
+  --color-bg-start: #090e15;
+  --color-bg-mid: #1550a0;
+  --color-bg-end: #87cafc;
 
   --foreground: #f0f4ff;
   --foreground-muted: #94a3b8;
@@ -80,8 +80,8 @@ body {
   background: linear-gradient(
     180deg,
     var(--color-bg-start) 0%,
-    var(--color-bg-mid) 40%,
-    #051024 100%
+    var(--color-bg-mid) 60%,
+    var(--color-bg-end) 100%
   );
   background-size: 100% 200%;
   background-attachment: fixed;
