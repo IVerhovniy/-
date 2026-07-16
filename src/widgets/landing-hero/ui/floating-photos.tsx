@@ -74,25 +74,31 @@ export function FloatingPhotos() {
       // Lerp для плавности
       currentX += (targetX - currentX) * 0.05;
       currentY += (targetY - currentY) * 0.05;
+      
+      const time = performance.now() / 1000;
 
       imagesRef.current.forEach((el, index) => {
         if (!el) return;
         const photo = PHOTOS[index];
         
         // Смещение от мыши
-        const moveX = currentX * photo.depth * 60; 
-        const moveY = currentY * photo.depth * 60;
+        const moveX = currentX * photo.depth * 80; 
+        const moveY = currentY * photo.depth * 80;
         
-        // Смещение от скролла (разная скорость для иллюзии глубины)
-        const scrollOffset = -scrollY * photo.depth * 0.7;
+        // Смещение от скролла (усиленный параллакс)
+        const scrollOffset = -scrollY * photo.depth * 1.2;
 
-        // 3D-вращение вокруг осей X и Y
-        const rotateX = -currentY * photo.depth * 15;
-        const rotateY = currentX * photo.depth * 15;
+        // Легкое автоматическое перемещение (плавание)
+        const autoFloatY = Math.sin(time * 0.8 + index * 2) * 20 * photo.depth;
+        const autoFloatX = Math.cos(time * 0.6 + index * 2) * 15 * photo.depth;
+
+        // 3D-вращение (комбинация мыши и авто-плавания)
+        const rotateX = -currentY * photo.depth * 20 + Math.sin(time * 0.5 + index) * 5;
+        const rotateY = currentX * photo.depth * 20 + Math.cos(time * 0.5 + index) * 5;
 
         // Прямое обновление DOM
         el.style.transform = `
-          translate3d(${moveX}px, calc(${moveY}px + ${scrollOffset}px), 0)
+          translate3d(calc(${moveX}px + ${autoFloatX}px), calc(${moveY}px + ${scrollOffset}px + ${autoFloatY}px), 0)
           rotateX(${rotateX}deg)
           rotateY(${rotateY}deg)
           rotateZ(${photo.rotation}deg)
