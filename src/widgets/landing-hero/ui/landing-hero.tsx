@@ -30,7 +30,7 @@ export function LandingHero() {
         {/* Заголовок */}
         <h1
           className="text-5xl sm:text-6xl md:text-7xl lg:text-8xl font-bold tracking-tight leading-[0.95] animate-fade-in-up"
-          style={{ animationDelay: "0.1s" }}
+          style={{ animationDelay: "0.1s", fontFamily: '"Actay Wide", sans-serif' }}
         >
           <span className="block text-white">Создавайте</span>
           <span
