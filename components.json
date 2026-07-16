@@ -1,0 +1,29 @@
+{
+  "components": [
+    {
+      "name": "Button",
+      "path": "src/shared/ui/button.tsx",
+      "props": ["variant: primary|secondary|ghost|outline", "size: sm|md|lg", "leftIcon: ReactNode", "rightIcon: ReactNode", "isLoading: boolean", "children: ReactNode"]
+    },
+    {
+      "name": "Modal",
+      "path": "src/shared/ui/modal.tsx",
+      "props": ["isOpen: boolean", "onClose: () => void", "title: string", "size: sm|md|lg", "children: ReactNode"]
+    },
+    {
+      "name": "CustomCursor",
+      "path": "src/shared/ui/custom-cursor.tsx",
+      "props": []
+    },
+    {
+      "name": "WireframeGlobe",
+      "path": "src/widgets/landing-hero/ui/wireframe-globe.tsx",
+      "props": []
+    },
+    {
+      "name": "LandingHero",
+      "path": "src/widgets/landing-hero/ui/landing-hero.tsx",
+      "props": []
+    }
+  ]
+}
