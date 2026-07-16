@@ -54,7 +54,7 @@ export function WireframeGlobe() {
 
     // 1. Глобус (сферы и точки)
     const globeGroup = new THREE.Group();
-    
+
     const sphereGeometry = new THREE.SphereGeometry(2.2, 36, 24);
     const wireframeMaterial = new THREE.MeshBasicMaterial({
       color: 0xffffff,
@@ -102,7 +102,7 @@ export function WireframeGlobe() {
     // 3. Плавающие картинки (Textures + Planes)
     const textureLoader = new THREE.TextureLoader();
     const planes: { mesh: THREE.Mesh, baseRot: number, floatSpeed: number }[] = [];
-    
+
     const planeConfigs = [
       { x: -3.8, y: 1.5, z: 2.0, rotZ: -0.15, w: 1.6, h: 1.2 }, // Ближе к камере (z=2)
       { x: 4.0, y: 1.2, z: -1.0, rotZ: 0.1, w: 1.3, h: 1.7 },   // Дальше (z=-1)
@@ -114,24 +114,24 @@ export function WireframeGlobe() {
       textureLoader.load(url, (texture) => {
         texture.colorSpace = THREE.SRGBColorSpace;
         const config = planeConfigs[i];
-        
+
         const geometry = new THREE.PlaneGeometry(config.w, config.h);
-        const material = new THREE.MeshBasicMaterial({ 
-          map: texture, 
+        const material = new THREE.MeshBasicMaterial({
+          map: texture,
           transparent: true,
           opacity: 0, // Для плавного появления
           side: THREE.DoubleSide
         });
-        
+
         const mesh = new THREE.Mesh(geometry, material);
         mesh.position.set(config.x, config.y, config.z);
         mesh.rotation.z = config.rotZ;
-        
+
         scene.add(mesh);
-        planes.push({ 
-          mesh, 
-          baseRot: config.rotZ, 
-          floatSpeed: 0.5 + i * 0.3 
+        planes.push({
+          mesh,
+          baseRot: config.rotZ,
+          floatSpeed: 0.5 + i * 0.3
         });
       });
     });
@@ -162,39 +162,39 @@ export function WireframeGlobe() {
       planes.forEach((p, i) => {
         // Плавное появление
         if (p.mesh.material instanceof THREE.MeshBasicMaterial && p.mesh.material.opacity < 1) {
-           p.mesh.material.opacity += 0.02;
+          p.mesh.material.opacity += 0.02;
         }
-        
+
         // Авто-плавание
         p.mesh.position.y += Math.sin(elapsed * p.floatSpeed + i) * 0.0015;
         p.mesh.rotation.z = p.baseRot + Math.cos(elapsed * 0.5 + i) * 0.02;
-        
+
         // Картинки всегда немного повернуты к центру камеры
         p.mesh.lookAt(camera.position.x, camera.position.y, camera.position.z + 10);
       });
 
       // Параллакс КАМЕРЫ (двигаем камеру, чтобы вся сцена реагировала одинаково)
       // Наезд камеры при скролле
-      const targetCamZ = 5.5 - scrollY * 0.005; 
-      
+      const targetCamZ = 5.5 - scrollY * 0.005;
+
       // Смещение камеры от мыши (движение в противовес)
       const targetCamX = -mouseRef.current.x * 1.5;
       const targetCamY = -mouseRef.current.y * 1.5 - (scrollY * 0.002);
-      
+
       camera.position.x += (targetCamX - camera.position.x) * 0.05;
       camera.position.y += (targetCamY - camera.position.y) * 0.05;
       camera.position.z += (targetCamZ - camera.position.z) * 0.05;
-      
+
       // Камера всегда смотрит на глобус
       camera.lookAt(0, 0, 0);
 
       // Интенсивность свечения и увеличение масштаба зависят от расстояния мыши
       const mouseDistance = Math.sqrt(mouseRef.current.x ** 2 + mouseRef.current.y ** 2);
-      
+
       // Интенсивность: от 0.4 до 1.0
       const targetIntensity = 0.4 + mouseDistance * 0.6;
       ambientLight.intensity += (targetIntensity - ambientLight.intensity) * 0.05;
-      
+
       // Масштаб всей сцены: от 1 в центре до ~1.1 по краям
       const targetScale = 1 + mouseDistance * 0.1;
       scene.scale.x += (targetScale - scene.scale.x) * 0.05;

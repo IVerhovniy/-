@@ -1,0 +1,7 @@
+{
+  "version": 3,
+  "sources": [],
+  "sections": [
+    {"offset": {"line": 13, "column": 0}, "map": {"version":3,"sources":["file:///Users/aleksandrnikitin/%D1%82%D0%B5%D1%81%D1%82%D0%BE%D0%B2%D0%BE%D0%B5/app/src/app/favicon.ico.mjs%20%28structured%20image%20object%29"],"sourcesContent":["import src from \"IMAGE\";\nexport default { src, width: 256, height: 256 }\n"],"names":["src","width","height"],"mappings":";;;;AAAA;;uCACe;IAAEA,KAAAA,0IAAG;IAAEC,OAAO;IAAKC,QAAQ;AAAI"}},
+    {"offset": {"line": 28, "column": 0}, "map": {"version":3,"sources":["file:///Users/aleksandrnikitin/%D1%82%D0%B5%D1%81%D1%82%D0%BE%D0%B2%D0%BE%D0%B5/app/src/app/page.tsx"],"sourcesContent":["export default function Home() {\n  return (\n    <main className=\"flex-1 flex flex-col items-center justify-center px-4\">\n      <h1 className=\"text-5xl md:text-7xl font-bold text-center tracking-tight animate-fade-in-up\">\n        AI Video Studio\n      </h1>\n      <p className=\"mt-6 text-lg md:text-xl text-center max-w-2xl\" style={{ color: \"var(--color-text-secondary)\" }}>\n        Создавайте профессиональные видео из текстовых идей\n      </p>\n    </main>\n  );\n}\n"],"names":["Home","className","style","color"],"mappings":";;;;;;AAAe,SAASA;IACtB,qBACE,8OAAC;QAAKC,WAAU;;0BACd,8OAAC;gBAAGA,WAAU;0BAA+E;;;;;;0BAG7F,8OAAC;gBAAEA,WAAU;gBAAgDC,OAAO;oBAAEC,OAAO;gBAA8B;0BAAG;;;;;;;;;;;;AAKpH"}}]
+}
