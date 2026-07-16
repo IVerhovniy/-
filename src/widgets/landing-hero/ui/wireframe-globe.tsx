@@ -133,6 +133,12 @@ export function WireframeGlobe() {
       const targetIntensity = 0.3 + mouseDistance * 0.5;
       ambientLight.intensity += (targetIntensity - ambientLight.intensity) * 0.05;
 
+      // Параллакс от скролла (противоположно прокрутке страницы)
+      // При скролле вниз страница едет вверх, а глобус уходит вниз (negative Y)
+      const scrollY = window.scrollY;
+      const targetPosY = -scrollY * 0.005;
+      scene.position.y += (targetPosY - scene.position.y) * 0.05;
+
       renderer.render(scene, camera);
       frameIdRef.current = requestAnimationFrame(animate);
     };
