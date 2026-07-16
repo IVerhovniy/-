@@ -20,7 +20,7 @@ interface ButtonProps extends ButtonHTMLAttributes<HTMLButtonElement> {
 
 const variantStyles: Record<ButtonVariant, string> = {
   primary:
-    "bg-[var(--color-accent)] hover:bg-[var(--color-accent-hover)] text-white shadow-lg hover:shadow-[var(--color-accent-glow)]",
+    "bg-white hover:bg-white/90 text-black shadow-lg hover:shadow-white/20",
   secondary:
     "glass glass-hover text-[var(--color-text-primary)]",
   ghost:

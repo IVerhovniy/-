@@ -119,6 +119,20 @@ export function WireframeGlobe() {
       scene.rotation.x += (targetRotX - scene.rotation.x) * 0.02;
       scene.rotation.y += (targetRotY - scene.rotation.y) * 0.02;
 
+      // Динамическое увеличение и интенсивность
+      const mouseDistance = Math.sqrt(
+        mouseRef.current.x ** 2 + mouseRef.current.y ** 2
+      );
+      // Масштаб: от 1 в центре до ~1.1 по краям
+      const targetScale = 1 + mouseDistance * 0.1;
+      scene.scale.x += (targetScale - scene.scale.x) * 0.05;
+      scene.scale.y += (targetScale - scene.scale.y) * 0.05;
+      scene.scale.z += (targetScale - scene.scale.z) * 0.05;
+
+      // Интенсивность свечения: от 0.3 до 0.8
+      const targetIntensity = 0.3 + mouseDistance * 0.5;
+      ambientLight.intensity += (targetIntensity - ambientLight.intensity) * 0.05;
+
       renderer.render(scene, camera);
       frameIdRef.current = requestAnimationFrame(animate);
     };

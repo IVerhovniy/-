@@ -20,12 +20,7 @@ export function LandingHero() {
 
       {/* Контент поверх глобуса */}
       <div className="relative z-10 flex flex-col items-center text-center px-4 max-w-4xl">
-        {/* Бейдж */}
-        <div className="glass rounded-full px-4 py-1.5 mb-8 animate-fade-in-up">
-          <span className="text-xs font-medium tracking-wider uppercase text-[var(--color-text-secondary)]">
-            AI-powered video generation
-          </span>
-        </div>
+
 
         {/* Заголовок */}
         <h1
