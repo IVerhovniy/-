@@ -3,7 +3,6 @@
 import { useState } from "react";
 import { Button } from "@/shared/ui";
 import { WireframeGlobe } from "./wireframe-globe";
-import { FloatingPhotos } from "./floating-photos";
 
 /**
  * Главный hero-блок лендинга.
@@ -18,9 +17,6 @@ export function LandingHero() {
     <section className="relative w-full min-h-screen flex flex-col items-center justify-center overflow-hidden">
       {/* 3D Глобус на фоне */}
       <WireframeGlobe />
-      
-      {/* Плавающие 3D фотографии */}
-      <FloatingPhotos />
 
       {/* Контент поверх глобуса */}
       <div className="relative z-10 flex flex-col items-center text-center px-4 max-w-4xl">

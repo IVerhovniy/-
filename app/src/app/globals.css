@@ -75,18 +75,23 @@ body {
   color: var(--foreground);
   font-family: var(--font-sans, "Inter", system-ui, sans-serif);
 
-  /* Градиентный фон как у Sui: тёмно-синий → голубой. 
-     Увеличиваем background-size для анимации (динамический градиент к тёмному) */
-  background: linear-gradient(
-    180deg,
-    var(--color-bg-start) 0%,
-    var(--color-bg-mid) 60%,
-    var(--color-bg-end) 100%
-  );
-  background-size: 100% 200%;
+  /* Начальный радиальный градиент */
+  background: radial-gradient(155.66% 50% at 50.05% 50%, rgba(189, 196, 247, 0.00) 0%, #BDC4F7 100%), 
+              radial-gradient(73.54% 97.43% at 50.05% 0%, #F0E 0%, #FF3794 70.67%, #C6C9F7 100%);
   background-attachment: fixed;
-  animation: gradientShift 10s ease-in-out infinite alternate;
   position: relative;
+}
+
+/* Псевдоэлемент для анимации перелива во второй градиент */
+body::before {
+  content: "";
+  position: fixed;
+  inset: 0;
+  z-index: -1;
+  pointer-events: none;
+  background: radial-gradient(311.31% 100% at 50% 0%, rgba(111, 0, 255, 0.00) 0%, #6200FF 100%), 
+              radial-gradient(56.43% 74.76% at 50% 50.16%, #FF379B 0%, #A537FF 70.67%, #C6C9F7 100%);
+  animation: gradientCrossfade 5s ease-in-out infinite alternate;
 }
 
 /* Inner shadow (vignette) эффект по краям экрана */
@@ -99,12 +104,12 @@ body::after {
   z-index: 999;
 }
 
-@keyframes gradientShift {
+@keyframes gradientCrossfade {
   0% {
-    background-position: 0% 0%;
+    opacity: 0;
   }
   100% {
-    background-position: 0% 100%;
+    opacity: 1;
   }
 }
 
