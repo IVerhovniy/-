@@ -2,6 +2,9 @@
 
 import { useEffect, useRef, useCallback } from "react";
 import * as THREE from "three";
+import { EffectComposer } from "three/addons/postprocessing/EffectComposer.js";
+import { RenderPass } from "three/addons/postprocessing/RenderPass.js";
+import { ShaderPass } from "three/addons/postprocessing/ShaderPass.js";
 
 const PHOTOS = [
   "https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?q=80&w=600&auto=format&fit=crop",
@@ -9,6 +12,43 @@ const PHOTOS = [
   "https://images.unsplash.com/photo-1550745165-9bc0b252726f?q=80&w=600&auto=format&fit=crop",
   "https://images.unsplash.com/photo-1620641788421-7a1c342ea42e?q=80&w=600&auto=format&fit=crop"
 ];
+
+// Шейдер для полноэкранной рефракции (Glass / Liquid Distortion)
+const LiquidShader = {
+  uniforms: {
+    tDiffuse: { value: null },
+    uTime: { value: 0 },
+    uScrollVelocity: { value: 0 }
+  },
+  vertexShader: `
+    varying vec2 vUv;
+    void main() {
+      vUv = uv;
+      gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0);
+    }
+  `,
+  fragmentShader: `
+    uniform sampler2D tDiffuse;
+    uniform float uTime;
+    uniform float uScrollVelocity;
+    varying vec2 vUv;
+
+    void main() {
+      vec2 uv = vUv;
+      
+      // Плавное искажение, имитирующее рефракцию стекла или жидкости
+      // Интенсивность искажения увеличивается при скролле
+      float intensity = 0.005 + abs(uScrollVelocity) * 0.02;
+      float noiseX = sin(uv.y * 8.0 + uTime * 2.0) * intensity;
+      float noiseY = cos(uv.x * 8.0 + uTime * 2.0) * intensity;
+      
+      vec2 distortedUv = uv + vec2(noiseX, noiseY);
+      
+      // Читаем пиксель со сдвигом, без цветовых аберраций, чтобы цвета оставались естественными
+      gl_FragColor = texture2D(tDiffuse, distortedUv);
+    }
+  `
+};
 
 /**
  * 3D-сцена: Глобус + Плавающие картинки (как в unseen studio).
@@ -19,6 +59,10 @@ export function WireframeGlobe() {
   const mouseRef = useRef({ x: 0, y: 0 });
   const rendererRef = useRef<THREE.WebGLRenderer | null>(null);
   const frameIdRef = useRef<number>(0);
+  const isMountedRef = useRef(true);
+  const scrollYRef = useRef(0);
+  const lastScrollYRef = useRef(0);
+  const scrollVelocityRef = useRef(0);
 
   const handleMouseMove = useCallback((e: MouseEvent) => {
     mouseRef.current.x = (e.clientX / window.innerWidth) * 2 - 1;
@@ -26,8 +70,11 @@ export function WireframeGlobe() {
   }, []);
 
   useEffect(() => {
+    isMountedRef.current = true;
     const container = containerRef.current;
     if (!container) return;
+
+    const disposables: { dispose: () => void }[] = [];
 
     // Scene
     const scene = new THREE.Scene();
@@ -45,12 +92,24 @@ export function WireframeGlobe() {
     const renderer = new THREE.WebGLRenderer({
       antialias: true,
       alpha: true,
+      powerPreference: "high-performance"
     });
     renderer.setSize(container.clientWidth, container.clientHeight);
     renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
-    renderer.setClearColor(0x000000, 0);
+    renderer.setClearColor(0x000000, 0); // Прозрачный фон
     container.appendChild(renderer.domElement);
     rendererRef.current = renderer;
+
+    // Post-processing
+    const composer = new EffectComposer(renderer);
+    const renderPass = new RenderPass(scene, camera);
+    // Делаем фон RenderPass прозрачным
+    renderPass.clearColor = new THREE.Color(0, 0, 0);
+    renderPass.clearAlpha = 0;
+    composer.addPass(renderPass);
+
+    const liquidPass = new ShaderPass(LiquidShader);
+    composer.addPass(liquidPass);
 
     // 1. Глобус (сферы и точки)
     const globeGroup = new THREE.Group();
@@ -95,6 +154,12 @@ export function WireframeGlobe() {
 
     scene.add(globeGroup);
 
+    disposables.push(
+      sphereGeometry, wireframeMaterial,
+      innerGeometry, innerMaterial,
+      dotGeometry, dotMaterial
+    );
+
     // 2. Свет
     const ambientLight = new THREE.AmbientLight(0x3b82f6, 0.4);
     scene.add(ambientLight);
@@ -112,6 +177,11 @@ export function WireframeGlobe() {
 
     PHOTOS.forEach((url, i) => {
       textureLoader.load(url, (texture) => {
+        if (!isMountedRef.current) {
+          texture.dispose();
+          return;
+        }
+
         texture.colorSpace = THREE.SRGBColorSpace;
         const config = planeConfigs[i];
 
@@ -119,7 +189,7 @@ export function WireframeGlobe() {
         const material = new THREE.MeshBasicMaterial({
           map: texture,
           transparent: true,
-          opacity: 0, // Для плавного появления
+          opacity: 0, // Плавное появление
           side: THREE.DoubleSide
         });
 
@@ -133,10 +203,18 @@ export function WireframeGlobe() {
           baseRot: config.rotZ,
           floatSpeed: 0.5 + i * 0.3
         });
+
+        disposables.push(geometry, material, texture);
       });
     });
 
     window.addEventListener("mousemove", handleMouseMove);
+    
+    // Оптимизация производительности: слушатель скролла вместо чтения window.scrollY в animate (избегаем layout thrashing)
+    const handleScroll = () => {
+      scrollYRef.current = window.scrollY;
+    };
+    window.addEventListener("scroll", handleScroll, { passive: true });
 
     // Animation loop
     const startTime = performance.now();
@@ -152,15 +230,25 @@ export function WireframeGlobe() {
       dots.rotation.y = sphere.rotation.y;
       dots.rotation.x = sphere.rotation.x;
 
-      // Скролл
-      const scrollY = window.scrollY;
+      // Скролл (читаем из ref без layout thrashing)
+      const scrollY = scrollYRef.current;
+      
+      // Расчет скорости скролла для эффекта рефракции
+      const scrollDelta = scrollY - lastScrollYRef.current;
+      lastScrollYRef.current = scrollY;
+      
+      // Плавное затухание скорости (инерция)
+      scrollVelocityRef.current += (scrollDelta * 0.01 - scrollVelocityRef.current) * 0.1;
+      
+      // Обновляем uniform'ы пост-обработки
+      liquidPass.uniforms.uTime.value = elapsed;
+      liquidPass.uniforms.uScrollVelocity.value = scrollVelocityRef.current;
 
       // Глобус прокручивается вперед при скролле
       globeGroup.rotation.x += ((scrollY * 0.002) - globeGroup.rotation.x) * 0.05;
 
       // Анимация картинок
       planes.forEach((p, i) => {
-        // Плавное появление
         if (p.mesh.material instanceof THREE.MeshBasicMaterial && p.mesh.material.opacity < 1) {
           p.mesh.material.opacity += 0.02;
         }
@@ -201,7 +289,8 @@ export function WireframeGlobe() {
       scene.scale.y += (targetScale - scene.scale.y) * 0.05;
       scene.scale.z += (targetScale - scene.scale.z) * 0.05;
 
-      renderer.render(scene, camera);
+      // Используем composer для пост-обработки вместо renderer.render
+      composer.render();
       frameIdRef.current = requestAnimationFrame(animate);
     };
 
@@ -215,21 +304,29 @@ export function WireframeGlobe() {
       camera.aspect = w / h;
       camera.updateProjectionMatrix();
       renderer.setSize(w, h);
+      composer.setSize(w, h);
     };
 
     window.addEventListener("resize", handleResize);
 
     return () => {
+      isMountedRef.current = false;
       cancelAnimationFrame(frameIdRef.current);
       window.removeEventListener("mousemove", handleMouseMove);
+      window.removeEventListener("scroll", handleScroll);
       window.removeEventListener("resize", handleResize);
+      
+      disposables.forEach(d => {
+        if (d && typeof d.dispose === 'function') {
+          d.dispose();
+        }
+      });
+      
+      renderPass.dispose();
+      liquidPass.dispose();
+      composer.dispose();
       renderer.dispose();
-      sphereGeometry.dispose();
-      wireframeMaterial.dispose();
-      innerGeometry.dispose();
-      innerMaterial.dispose();
-      dotGeometry.dispose();
-      dotMaterial.dispose();
+      
       if (container.contains(renderer.domElement)) {
         container.removeChild(renderer.domElement);
       }

@@ -289,9 +289,15 @@ var __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist
 var __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$index$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__ = __turbopack_context__.i("[project]/node_modules/next/dist/compiled/react/index.js [app-client] (ecmascript)");
 var __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$three$2f$build$2f$three$2e$core$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__ = __turbopack_context__.i("[project]/node_modules/three/build/three.core.js [app-client] (ecmascript)");
 var __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$three$2f$build$2f$three$2e$module$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__$3c$locals$3e$__ = __turbopack_context__.i("[project]/node_modules/three/build/three.module.js [app-client] (ecmascript) <locals>");
+var __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$three$2f$examples$2f$jsm$2f$postprocessing$2f$EffectComposer$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__ = __turbopack_context__.i("[project]/node_modules/three/examples/jsm/postprocessing/EffectComposer.js [app-client] (ecmascript)");
+var __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$three$2f$examples$2f$jsm$2f$postprocessing$2f$RenderPass$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__ = __turbopack_context__.i("[project]/node_modules/three/examples/jsm/postprocessing/RenderPass.js [app-client] (ecmascript)");
+var __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$three$2f$examples$2f$jsm$2f$postprocessing$2f$ShaderPass$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__ = __turbopack_context__.i("[project]/node_modules/three/examples/jsm/postprocessing/ShaderPass.js [app-client] (ecmascript)");
 ;
 var _s = __turbopack_context__.k.signature();
 "use client";
+;
+;
+;
 ;
 ;
 const PHOTOS = [
@@ -300,6 +306,48 @@ const PHOTOS = [
     "https://images.unsplash.com/photo-1550745165-9bc0b252726f?q=80&w=600&auto=format&fit=crop",
     "https://images.unsplash.com/photo-1620641788421-7a1c342ea42e?q=80&w=600&auto=format&fit=crop"
 ];
+// Шейдер для полноэкранной рефракции (Glass / Liquid Distortion)
+const LiquidShader = {
+    uniforms: {
+        tDiffuse: {
+            value: null
+        },
+        uTime: {
+            value: 0
+        },
+        uScrollVelocity: {
+            value: 0
+        }
+    },
+    vertexShader: `
+    varying vec2 vUv;
+    void main() {
+      vUv = uv;
+      gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0);
+    }
+  `,
+    fragmentShader: `
+    uniform sampler2D tDiffuse;
+    uniform float uTime;
+    uniform float uScrollVelocity;
+    varying vec2 vUv;
+
+    void main() {
+      vec2 uv = vUv;
+      
+      // Плавное искажение, имитирующее рефракцию стекла или жидкости
+      // Интенсивность искажения увеличивается при скролле
+      float intensity = 0.005 + abs(uScrollVelocity) * 0.02;
+      float noiseX = sin(uv.y * 8.0 + uTime * 2.0) * intensity;
+      float noiseY = cos(uv.x * 8.0 + uTime * 2.0) * intensity;
+      
+      vec2 distortedUv = uv + vec2(noiseX, noiseY);
+      
+      // Читаем пиксель со сдвигом, без цветовых аберраций, чтобы цвета оставались естественными
+      gl_FragColor = texture2D(tDiffuse, distortedUv);
+    }
+  `
+};
 function WireframeGlobe() {
     _s();
     const containerRef = (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$index$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["useRef"])(null);
@@ -309,6 +357,10 @@ function WireframeGlobe() {
     });
     const rendererRef = (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$index$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["useRef"])(null);
     const frameIdRef = (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$index$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["useRef"])(0);
+    const isMountedRef = (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$index$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["useRef"])(true);
+    const scrollYRef = (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$index$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["useRef"])(0);
+    const lastScrollYRef = (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$index$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["useRef"])(0);
+    const scrollVelocityRef = (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$index$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["useRef"])(0);
     const handleMouseMove = (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$index$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["useCallback"])({
         "WireframeGlobe.useCallback[handleMouseMove]": (e)=>{
             mouseRef.current.x = e.clientX / window.innerWidth * 2 - 1;
@@ -317,8 +369,10 @@ function WireframeGlobe() {
     }["WireframeGlobe.useCallback[handleMouseMove]"], []);
     (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$index$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["useEffect"])({
         "WireframeGlobe.useEffect": ()=>{
+            isMountedRef.current = true;
             const container = containerRef.current;
             if (!container) return;
+            const disposables = [];
             // Scene
             const scene = new __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$three$2f$build$2f$three$2e$core$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["Scene"]();
             // Camera
@@ -327,13 +381,23 @@ function WireframeGlobe() {
             // Renderer
             const renderer = new __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$three$2f$build$2f$three$2e$module$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__$3c$locals$3e$__["WebGLRenderer"]({
                 antialias: true,
-                alpha: true
+                alpha: true,
+                powerPreference: "high-performance"
             });
             renderer.setSize(container.clientWidth, container.clientHeight);
             renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
-            renderer.setClearColor(0x000000, 0);
+            renderer.setClearColor(0x000000, 0); // Прозрачный фон
             container.appendChild(renderer.domElement);
             rendererRef.current = renderer;
+            // Post-processing
+            const composer = new __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$three$2f$examples$2f$jsm$2f$postprocessing$2f$EffectComposer$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["EffectComposer"](renderer);
+            const renderPass = new __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$three$2f$examples$2f$jsm$2f$postprocessing$2f$RenderPass$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["RenderPass"](scene, camera);
+            // Делаем фон RenderPass прозрачным
+            renderPass.clearColor = new __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$three$2f$build$2f$three$2e$core$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["Color"](0, 0, 0);
+            renderPass.clearAlpha = 0;
+            composer.addPass(renderPass);
+            const liquidPass = new __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$three$2f$examples$2f$jsm$2f$postprocessing$2f$ShaderPass$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["ShaderPass"](LiquidShader);
+            composer.addPass(liquidPass);
             // 1. Глобус (сферы и точки)
             const globeGroup = new __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$three$2f$build$2f$three$2e$core$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["Group"]();
             const sphereGeometry = new __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$three$2f$build$2f$three$2e$core$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["SphereGeometry"](2.2, 36, 24);
@@ -372,6 +436,7 @@ function WireframeGlobe() {
             const dots = new __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$three$2f$build$2f$three$2e$core$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["Points"](dotGeometry, dotMaterial);
             globeGroup.add(dots);
             scene.add(globeGroup);
+            disposables.push(sphereGeometry, wireframeMaterial, innerGeometry, innerMaterial, dotGeometry, dotMaterial);
             // 2. Свет
             const ambientLight = new __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$three$2f$build$2f$three$2e$core$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["AmbientLight"](0x3b82f6, 0.4);
             scene.add(ambientLight);
@@ -416,6 +481,10 @@ function WireframeGlobe() {
                 "WireframeGlobe.useEffect": (url, i)=>{
                     textureLoader.load(url, {
                         "WireframeGlobe.useEffect": (texture)=>{
+                            if (!isMountedRef.current) {
+                                texture.dispose();
+                                return;
+                            }
                             texture.colorSpace = __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$three$2f$build$2f$three$2e$core$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["SRGBColorSpace"];
                             const config = planeConfigs[i];
                             const geometry = new __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$three$2f$build$2f$three$2e$core$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["PlaneGeometry"](config.w, config.h);
@@ -434,11 +503,21 @@ function WireframeGlobe() {
                                 baseRot: config.rotZ,
                                 floatSpeed: 0.5 + i * 0.3
                             });
+                            disposables.push(geometry, material, texture);
                         }
                     }["WireframeGlobe.useEffect"]);
                 }
             }["WireframeGlobe.useEffect"]);
             window.addEventListener("mousemove", handleMouseMove);
+            // Оптимизация производительности: слушатель скролла вместо чтения window.scrollY в animate (избегаем layout thrashing)
+            const handleScroll = {
+                "WireframeGlobe.useEffect.handleScroll": ()=>{
+                    scrollYRef.current = window.scrollY;
+                }
+            }["WireframeGlobe.useEffect.handleScroll"];
+            window.addEventListener("scroll", handleScroll, {
+                passive: true
+            });
             // Animation loop
             const startTime = performance.now();
             const animate = {
@@ -451,14 +530,21 @@ function WireframeGlobe() {
                     innerSphere.rotation.x = Math.cos(elapsed * 0.03) * 0.08;
                     dots.rotation.y = sphere.rotation.y;
                     dots.rotation.x = sphere.rotation.x;
-                    // Скролл
-                    const scrollY = window.scrollY;
+                    // Скролл (читаем из ref без layout thrashing)
+                    const scrollY = scrollYRef.current;
+                    // Расчет скорости скролла для эффекта рефракции
+                    const scrollDelta = scrollY - lastScrollYRef.current;
+                    lastScrollYRef.current = scrollY;
+                    // Плавное затухание скорости (инерция)
+                    scrollVelocityRef.current += (scrollDelta * 0.01 - scrollVelocityRef.current) * 0.1;
+                    // Обновляем uniform'ы пост-обработки
+                    liquidPass.uniforms.uTime.value = elapsed;
+                    liquidPass.uniforms.uScrollVelocity.value = scrollVelocityRef.current;
                     // Глобус прокручивается вперед при скролле
                     globeGroup.rotation.x += (scrollY * 0.002 - globeGroup.rotation.x) * 0.05;
                     // Анимация картинок
                     planes.forEach({
                         "WireframeGlobe.useEffect.animate": (p, i)=>{
-                            // Плавное появление
                             if (p.mesh.material instanceof __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$three$2f$build$2f$three$2e$core$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["MeshBasicMaterial"] && p.mesh.material.opacity < 1) {
                                 p.mesh.material.opacity += 0.02;
                             }
@@ -490,7 +576,8 @@ function WireframeGlobe() {
                     scene.scale.x += (targetScale - scene.scale.x) * 0.05;
                     scene.scale.y += (targetScale - scene.scale.y) * 0.05;
                     scene.scale.z += (targetScale - scene.scale.z) * 0.05;
-                    renderer.render(scene, camera);
+                    // Используем composer для пост-обработки вместо renderer.render
+                    composer.render();
                     frameIdRef.current = requestAnimationFrame(animate);
                 }
             }["WireframeGlobe.useEffect.animate"];
@@ -504,21 +591,28 @@ function WireframeGlobe() {
                     camera.aspect = w / h;
                     camera.updateProjectionMatrix();
                     renderer.setSize(w, h);
+                    composer.setSize(w, h);
                 }
             }["WireframeGlobe.useEffect.handleResize"];
             window.addEventListener("resize", handleResize);
             return ({
                 "WireframeGlobe.useEffect": ()=>{
+                    isMountedRef.current = false;
                     cancelAnimationFrame(frameIdRef.current);
                     window.removeEventListener("mousemove", handleMouseMove);
+                    window.removeEventListener("scroll", handleScroll);
                     window.removeEventListener("resize", handleResize);
+                    disposables.forEach({
+                        "WireframeGlobe.useEffect": (d)=>{
+                            if (d && typeof d.dispose === 'function') {
+                                d.dispose();
+                            }
+                        }
+                    }["WireframeGlobe.useEffect"]);
+                    renderPass.dispose();
+                    liquidPass.dispose();
+                    composer.dispose();
                     renderer.dispose();
-                    sphereGeometry.dispose();
-                    wireframeMaterial.dispose();
-                    innerGeometry.dispose();
-                    innerMaterial.dispose();
-                    dotGeometry.dispose();
-                    dotMaterial.dispose();
                     if (container.contains(renderer.domElement)) {
                         container.removeChild(renderer.domElement);
                     }
@@ -534,11 +628,11 @@ function WireframeGlobe() {
         "aria-hidden": "true"
     }, void 0, false, {
         fileName: "[project]/src/widgets/landing-hero/ui/wireframe-globe.tsx",
-        lineNumber: 240,
+        lineNumber: 337,
         columnNumber: 5
     }, this);
 }
-_s(WireframeGlobe, "8r6pnz8XQbIfkYgAe0z8uzcZHK0=");
+_s(WireframeGlobe, "QW0JBwmk/fNEYZKnSYbeQ8VkzU8=");
 _c = WireframeGlobe;
 var _c;
 __turbopack_context__.k.register(_c, "WireframeGlobe");
