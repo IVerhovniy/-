@@ -81,24 +81,26 @@ export function FloatingPhotos() {
         if (!el) return;
         const photo = PHOTOS[index];
         
-        // Смещение от мыши
-        const moveX = currentX * photo.depth * 80; 
-        const moveY = currentY * photo.depth * 80;
+        // Смещение от мыши (более плавное и естественное)
+        const moveX = currentX * photo.depth * 100; 
+        const moveY = currentY * photo.depth * 100;
         
-        // Смещение от скролла (усиленный параллакс)
-        const scrollOffset = -scrollY * photo.depth * 1.2;
+        // В unseen studio скролл — это движение ВГЛУБЬ (Z-ось) и немного вверх (Y-ось)
+        // Картинки летят НА нас
+        const scrollZ = scrollY * photo.depth * 1.5; 
+        const scrollYOffset = -scrollY * photo.depth * 0.3;
 
         // Легкое автоматическое перемещение (плавание)
-        const autoFloatY = Math.sin(time * 0.8 + index * 2) * 20 * photo.depth;
-        const autoFloatX = Math.cos(time * 0.6 + index * 2) * 15 * photo.depth;
+        const autoFloatY = Math.sin(time * 0.8 + index * 2) * 15;
+        const autoFloatX = Math.cos(time * 0.6 + index * 2) * 15;
 
         // 3D-вращение (комбинация мыши и авто-плавания)
-        const rotateX = -currentY * photo.depth * 20 + Math.sin(time * 0.5 + index) * 5;
-        const rotateY = currentX * photo.depth * 20 + Math.cos(time * 0.5 + index) * 5;
+        const rotateX = -currentY * photo.depth * 25 + Math.sin(time * 0.5 + index) * 5;
+        const rotateY = currentX * photo.depth * 25 + Math.cos(time * 0.5 + index) * 5;
 
-        // Прямое обновление DOM
+        // Прямое обновление DOM: translate3d теперь включает Z для эффекта наезда
         el.style.transform = `
-          translate3d(calc(${moveX}px + ${autoFloatX}px), calc(${moveY}px + ${scrollOffset}px + ${autoFloatY}px), 0)
+          translate3d(calc(${moveX}px + ${autoFloatX}px), calc(${moveY}px + ${scrollYOffset}px + ${autoFloatY}px), ${scrollZ}px)
           rotateX(${rotateX}deg)
           rotateY(${rotateY}deg)
           rotateZ(${photo.rotation}deg)

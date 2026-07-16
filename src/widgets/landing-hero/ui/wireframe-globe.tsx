@@ -113,11 +113,13 @@ export function WireframeGlobe() {
       dots.rotation.y = sphere.rotation.y;
       dots.rotation.x = sphere.rotation.x;
 
-      // Параллакс от мыши
-      const targetRotX = mouseRef.current.y * 0.15;
+      // Параллакс от мыши и скролла
+      // При скролле глобус прокручивается вперед (по оси X)
+      const scrollY = window.scrollY;
+      const targetRotX = mouseRef.current.y * 0.15 + scrollY * 0.002;
       const targetRotY = mouseRef.current.x * 0.15;
-      scene.rotation.x += (targetRotX - scene.rotation.x) * 0.02;
-      scene.rotation.y += (targetRotY - scene.rotation.y) * 0.02;
+      scene.rotation.x += (targetRotX - scene.rotation.x) * 0.05;
+      scene.rotation.y += (targetRotY - scene.rotation.y) * 0.05;
 
       // Динамическое увеличение и интенсивность
       const mouseDistance = Math.sqrt(
@@ -133,11 +135,9 @@ export function WireframeGlobe() {
       const targetIntensity = 0.3 + mouseDistance * 0.5;
       ambientLight.intensity += (targetIntensity - ambientLight.intensity) * 0.05;
 
-      // Параллакс от скролла (противоположно прокрутке страницы)
-      // При скролле вниз страница едет вверх, а глобус уходит вниз (negative Y)
-      const scrollY = window.scrollY;
-      const targetPosY = -scrollY * 0.005;
-      scene.position.y += (targetPosY - scene.position.y) * 0.05;
+      // Наезд глобуса при скролле (движение вглубь)
+      const targetPosZ = scrollY * 0.003;
+      scene.position.z += (targetPosZ - scene.position.z) * 0.05;
 
       renderer.render(scene, camera);
       frameIdRef.current = requestAnimationFrame(animate);
