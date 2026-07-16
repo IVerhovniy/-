@@ -1,5 +1,37 @@
 @import "tailwindcss";
 
+@font-face {
+  font-family: "Actay";
+  src: url("/fonts/Actay-Regular.otf") format("opentype");
+  font-weight: 400;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: "Actay";
+  src: url("/fonts/Actay-RegularItalic.otf") format("opentype");
+  font-weight: 400;
+  font-style: italic;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: "Actay Wide";
+  src: url("/fonts/ActayWide-Bold.otf") format("opentype");
+  font-weight: 700;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: "Actay Wide";
+  src: url("/fonts/ActayWide-BoldItalic.otf") format("opentype");
+  font-weight: 700;
+  font-style: italic;
+  font-display: swap;
+}
+
 :root {
   /* Основные цвета — синий градиент в стиле Sui */
   --color-bg-start: #0b1a3b;
@@ -28,9 +60,10 @@
 @theme inline {
   --color-background: var(--color-bg-start);
   --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
+  --font-sans: "Actay", var(--font-geist-sans), system-ui, sans-serif;
   --font-mono: var(--font-geist-mono);
 }
+
 
 /* Глобальные стили */
 html {
